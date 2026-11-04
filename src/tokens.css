@@ -1,0 +1,93 @@
+/* Згенеровано з Figma Variables (ЛМВ ЛР3 SmartCompare, оновлені Foundations): Color Light / Color Dark, Spacing, Radius, Text styles.
+   Шрифт: Fixel від MacPaw (SIL OFL 1.1), Display для заголовків і великих цифр, Text для решти. */
+@font-face { font-family: 'Fixel Text'; src: url('./fonts/FixelText-Regular.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'Fixel Text'; src: url('./fonts/FixelText-Medium.woff2') format('woff2'); font-weight: 500; font-display: swap; }
+@font-face { font-family: 'Fixel Text'; src: url('./fonts/FixelText-SemiBold.woff2') format('woff2'); font-weight: 600; font-display: swap; }
+@font-face { font-family: 'Fixel Display'; src: url('./fonts/FixelDisplay-SemiBold.woff2') format('woff2'); font-weight: 600; font-display: swap; }
+
+[data-mode] {
+  --bg-page: #F8F9FB;
+  --bg-surface: #FFFFFF;
+  --bg-subtle: #F1F3F6;
+  --border-default: #E3E7EC;
+  --border-strong: #7A838F;
+  --text-primary: #1B2129;
+  --text-secondary: #59626E;
+  --text-placeholder: #59626E;
+  --text-on-primary: #FFFFFF;
+  --text-link: #2B5F7E;
+  --action-primary: #2B5F7E;
+  --action-primary-hover: #234D67;
+  --action-primary-pressed: #1A394C;
+  --action-secondary-bg: #E6EDF2;
+  --focus-ring: #387BA4;
+  --accent-selected: #18665B;
+  --accent-selected-bg: #DDF1EE;
+  --status-missing-text: #3D4550;
+  --status-missing-bg: #F1F3F6;
+  --status-mismatch-text: #8A5300;
+  --status-mismatch-bg: #FFF3DC;
+  --status-mismatch-icon: #B87400;
+  --status-risk-text: #B3261E;
+  --status-risk-bg: #FCE8E6;
+  --status-success-text: #18665B;
+  --status-success-bg: #DDF1EE;
+  --status-error: #B3261E;
+}
+[data-mode='dark'] {
+  --bg-page: #12161C;
+  --bg-surface: #1B2129;
+  --bg-subtle: #232A33;
+  --border-default: #3D4550;
+  --border-strong: #7A838F;
+  --text-primary: #E3E7EC;
+  --text-secondary: #A7B0BC;
+  --text-placeholder: #A7B0BC;
+  --text-on-primary: #12161C;
+  --text-link: #8DBDD8;
+  --action-primary: #8DBDD8;
+  --action-primary-hover: #C2DBEA;
+  --action-primary-pressed: #E6EDF2;
+  --action-secondary-bg: #1F3A4B;
+  --focus-ring: #8DBDD8;
+  --accent-selected: #5CC2B1;
+  --accent-selected-bg: #16352F;
+  --status-missing-text: #C9CED6;
+  --status-missing-bg: #2A3039;
+  --status-mismatch-text: #F2C46B;
+  --status-mismatch-bg: #3A2C10;
+  --status-mismatch-icon: #F2C46B;
+  --status-risk-text: #F2A49D;
+  --status-risk-bg: #3D1F1C;
+  --status-success-text: #5CC2B1;
+  --status-success-bg: #16352F;
+  --status-error: #F2A49D;
+  color-scheme: dark;
+}
+:root {
+  --font-text: 'Fixel Text', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Fixel Display', 'Fixel Text', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --radius-s: 4px;
+  --radius-m: 8px;
+  --radius-l: 12px;
+  --radius-full: 999px;
+}
+.t-h1 { font-family: var(--font-display); font-weight:600; font-size: calc(28px * var(--ts, 1)); line-height: calc(36px * var(--ts, 1)); }
+.t-h2 { font-family: var(--font-display); font-weight:600; font-size: calc(22px * var(--ts, 1)); line-height: calc(28px * var(--ts, 1)); }
+.t-h3 { font-weight:600; font-size: calc(18px * var(--ts, 1)); line-height: calc(24px * var(--ts, 1)); }
+.t-body { font-weight:400; font-size: calc(16px * var(--ts, 1)); line-height: calc(24px * var(--ts, 1)); }
+.t-body-strong { font-weight:600; font-size: calc(16px * var(--ts, 1)); line-height: calc(24px * var(--ts, 1)); }
+.t-body-s { font-weight:400; font-size: calc(14px * var(--ts, 1)); line-height: calc(20px * var(--ts, 1)); }
+.t-body-s-strong { font-weight:600; font-size: calc(14px * var(--ts, 1)); line-height: calc(20px * var(--ts, 1)); }
+.t-caption { font-weight:500; font-size: calc(12px * var(--ts, 1)); line-height: calc(16px * var(--ts, 1)); }
+.t-numeric { font-weight:500; font-size: calc(16px * var(--ts, 1)); line-height: calc(24px * var(--ts, 1)); font-variant-numeric: tabular-nums; }
+.t-numeric-l { font-family: var(--font-display); font-weight:600; font-size: calc(24px * var(--ts, 1)); line-height: calc(32px * var(--ts, 1)); font-variant-numeric: tabular-nums; }
+.t-badge { font-weight:600; font-size: calc(12px * var(--ts, 1)); line-height: calc(16px * var(--ts, 1)); }
