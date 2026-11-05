@@ -242,6 +242,13 @@ export default function App({ mode, setMode, resetKey, onReset }) {
 
   let body, footer, bar;
 
+  const stepOk = (n) => n === 1 || (n === 2 ? listings.length > 0 : active.length >= 2);
+  const stepNav = (n) => {
+    if (n === 1) go('add'); else if (n === 2) go('home'); else if (n === 3) go('compare');
+    else if (candidate && screen !== 'compare') go('done');
+    else { const ci = active.findIndex((l) => l.key === candidate); go('compare'); setChooseIdx(ci >= 0 ? ci : null); setSheet({ kind: 'choose' }); }
+  };
+  const steps = (n) => <Stepper current={n} onStep={stepNav} enabled={stepOk} />;
   if (screen === 'home') {
     bar = <AppBar title="SmartCompare" right={settingsBtn} />;
     if (!listings.length) {
@@ -256,6 +263,7 @@ export default function App({ mode, setMode, resetKey, onReset }) {
     } else {
       body = (
         <div className="stack">
+          {steps(2)}
           <div className="section-head">
             <h2 className="t-h2">Ваші оголошення</h2>
             <span className="t-caption muted">Додано: {listings.length}</span>
@@ -289,6 +297,7 @@ export default function App({ mode, setMode, resetKey, onReset }) {
     bar = <AppBar title="Нове оголошення" onBack={() => go('home')} right={settingsBtn} />;
     body = (
       <form className="stack" onSubmit={submit} noValidate>
+        {steps(1)}
         {waitingL && (
           <div className="wait-card">
             <p className="t-body-s"><b>Лишився {waitingL.letter}</b> ({waitingL.city}, {waitingL.fields.price.value}). Додайте наступне оголошення, і порівняння продовжиться з ним.</p>
@@ -361,7 +370,7 @@ export default function App({ mode, setMode, resetKey, onReset }) {
       })();
       body = (
         <div className="stack">
-          <Stepper current={3} onStep={(n) => { if (n === 1) go('add'); else if (n === 2) go('home'); else { const ci = active.findIndex((l) => l.key === candidate); setChooseIdx(ci >= 0 ? ci : null); setSheet({ kind: 'choose' }); } }} />
+          {steps(3)}
           <div className="duels" role="group" aria-label="Пара в таблиці. Кнопка ↻ або змах картки вгору замінює оголошення наступним із черги">
             {visible.map((l) => (
               <DuelCard key={l.key} l={l} chosen={candidate === l.key} nextLetter={queue[0]?.letter}
@@ -523,6 +532,7 @@ export default function App({ mode, setMode, resetKey, onReset }) {
         <Button onClick={() => go('compare')}>До порівняння</Button></div>
     ) : (
       <div className="stack">
+        {steps(4)}
         <h2 className="t-h2">Ви обрали оголошення {c.letter}</h2>
         <ListingCard l={c} letter={c.letter} selected />
         {Object.values(c.fields).some((f) => f.status) && (

@@ -236,8 +236,8 @@ button.badge:hover { box-shadow: 0 0 0 1px currentColor; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 1ms !important; transition-duration: 1ms !important; } }
 
 /* --- Порівняння: патерни E-katalog, Apple Compare, eBay, Spotify (референси 9–15) --- */
-.stepper { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 8px; font-size: calc(12px * var(--ts, 1)); line-height: calc(16px * var(--ts, 1)); }
-.stepper li { color: var(--text-placeholder); font-weight: 500; }
+.stepper { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: calc(12px * var(--ts, 1)); line-height: calc(16px * var(--ts, 1)); }
+.stepper li { color: var(--text-placeholder); font-weight: 500; min-height: 24px; display: inline-flex; align-items: center; }
 .stepper li + li::before { content: "·"; margin-right: 8px; color: var(--text-placeholder); }
 .stepper li.done { color: var(--text-secondary); }
 .stepper-btn { all: unset; cursor: pointer; color: inherit; text-decoration: underline; text-decoration-color: var(--border-default); text-underline-offset: 3px; min-height: 24px; display: inline-flex; align-items: center; }
