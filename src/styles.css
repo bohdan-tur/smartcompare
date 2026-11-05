@@ -271,7 +271,7 @@ button.badge:hover { box-shadow: 0 0 0 1px currentColor; }
 .faq .badge { margin-right: 4px; }
 .hint { display: flex; gap: 8px; padding: 12px; border-radius: var(--radius-m); background: var(--action-secondary-bg); color: var(--text-primary); }
 .hint-ic { height: 20px; display: flex; align-items: center; color: var(--text-link); flex: none; }
-.action-bar { display: flex; gap: 12px; }
+.action-bar { display: flex; gap: var(--space-4); }
 .action-bar .btn { flex: 1; min-width: 0; padding: 0 var(--space-2); white-space: nowrap; font-size: calc(14px * var(--ts, 1)); line-height: calc(20px * var(--ts, 1)); }
 .action-bar .btn .count { min-width: 22px; height: 22px; font-size: calc(12px * var(--ts, 1)); }
 .label-ic { display: inline-flex; align-items: center; gap: 4px; }
@@ -298,7 +298,7 @@ button.badge:hover { box-shadow: 0 0 0 1px currentColor; }
 
 /* Попарне порівняння: дві картки-учасники, свайп угору відкидає */
 .btn-m { height: 40px; font-size: calc(14px * var(--ts, 1)); line-height: calc(20px * var(--ts, 1)); padding: 0 var(--space-3); }
-.duels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.duels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
 .duel { position: relative; display: flex; flex-direction: column; gap: 8px; padding: 8px; border-radius: var(--radius-l); background: var(--bg-surface); border: 1px solid var(--border-default); touch-action: pan-x; user-select: none; transition: transform .2s var(--ease), opacity .2s var(--ease); animation: enter .25s var(--ease); min-width: 0; }
 .duel.is-dragging { transition: none; cursor: grabbing; box-shadow: 0 12px 24px -12px rgba(0,0,0,.35); }
 .duel.is-chosen { border: 2px solid var(--accent-selected); padding: 8px; }
@@ -328,7 +328,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 /* Компактніші кнопки на списку оголошень */
 .btn-s { height: 36px; font-size: calc(14px * var(--ts, 1)); line-height: calc(20px * var(--ts, 1)); padding: 0 var(--space-3); width: auto; align-self: flex-start; }
 .card .card-cta.btn-s { margin-top: 0; }
-.foot-row { display: flex; gap: var(--space-2); }
+.foot-row { display: flex; gap: var(--space-4); }
 .foot-row .btn { flex: 1; min-width: 0; height: 48px; padding: 0 var(--space-2); font-size: calc(14px * var(--ts, 1)); line-height: calc(20px * var(--ts, 1)); }
 .app[data-ts="1.3"] .foot-row { flex-direction: column; }
 .app:not([data-ts="1"]) .btn-s { height: auto; min-height: 36px; padding-block: 8px; }
