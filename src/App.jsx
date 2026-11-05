@@ -342,7 +342,10 @@ export default function App({ mode, setMode, resetKey, onReset }) {
         )}
         {loading && (
           <div className="skeleton" aria-label="Завантажуємо оголошення">
-            <span className="sk sk-1" /><span className="sk sk-2" /><span className="sk sk-3" />
+            <div className="sk-row"><span className="sk sk-title" /><span className="sk sk-price" /></div>
+            <span className="sk sk-line" />
+            <div className="sk-row"><span className="sk sk-badge" /><span className="sk sk-badge" /></div>
+            <span className="sk sk-block" />
           </div>
         )}
         <div className="samples">
