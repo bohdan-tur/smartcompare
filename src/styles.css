@@ -459,7 +459,7 @@ button.vbox:focus-visible { outline: 2px solid var(--focus-ring); outline-offset
 
 /* Змах картки вгору: картка їде за пальцем, з'являється підказка; після порогу підказка стає «готово» */
 .duel { will-change: transform; }
-.swipe-label { position: absolute; left: 8px; right: 8px; bottom: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 8px; border-radius: var(--radius-m); background: var(--bg-subtle); color: var(--text-primary); font-weight: 600; font-size: calc(14px * var(--ts, 1)); line-height: calc(20px * var(--ts, 1)); opacity: 0; transition: opacity .15s, background .15s, color .15s; pointer-events: none; }
+.swipe-label { position: absolute; left: 8px; right: 8px; bottom: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 8px; border-radius: var(--radius-m); background: var(--bg-subtle); color: var(--text-primary); font-weight: 600; font-size: calc(12px * var(--ts, 1)); line-height: calc(16px * var(--ts, 1)); white-space: nowrap; opacity: 0; transition: opacity .15s, background .15s, color .15s; pointer-events: none; }
 .duel.is-swiping .swipe-label { opacity: 1; }
 .duel.is-armed .swipe-label { background: var(--accent-selected); color: var(--bg-surface); }
 .duel.is-armed { box-shadow: 0 12px 28px rgba(0,0,0,.18); }
