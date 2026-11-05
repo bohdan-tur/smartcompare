@@ -54,6 +54,22 @@ export default function App({ mode, setMode, resetKey, onReset }) {
   }, [resetKey]);
 
   useEffect(() => { bodyRef.current?.scrollTo(0, 0); }, [screen]);
+  // Системна кнопка «Назад» (жест на телефоні) працює всередині застосунку, а не закриває сайт
+  const backRef = useRef(null);
+  backRef.current = () => {
+    if (photo) { setPhoto(null); return true; }
+    if (sheet) { setSheet(null); return true; }
+    const parent = { add: 'home', compare: 'home', questions: 'compare', done: 'compare' }[screen];
+    if (parent) { go(parent); return true; }
+    return false;
+  };
+  useEffect(() => {
+    try { history.pushState({ sc: 1 }, ''); } catch { /* sandbox */ }
+    const onPop = () => { if (backRef.current && backRef.current()) { try { history.pushState({ sc: 1 }, ''); } catch { /* */ } } };
+    addEventListener('popstate', onPop);
+    return () => removeEventListener('popstate', onPop);
+  }, []);
+
   useEffect(() => () => { clearTimeout(timer.current); clearTimeout(toastTimer.current); }, []);
 
   function showToast(t) {

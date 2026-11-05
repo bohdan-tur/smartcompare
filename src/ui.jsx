@@ -40,9 +40,9 @@ export function Icon({ name, size = 16, stroke = 2, className = '' }) {
   );
 }
 
-export function Button({ type = 'primary', size = 'l', loading, disabled, children, className = '', ...rest }) {
+export function Button({ type = 'primary', size = 'l', loading, disabled, children, className = '', htmlType = 'button', ...rest }) {
   return (
-    <button className={`btn btn-${type} btn-${size} ${loading ? 'is-loading' : ''} ${className}`}
+    <button type={htmlType} className={`btn btn-${type} btn-${size} ${loading ? 'is-loading' : ''} ${className}`}
       disabled={disabled || loading} aria-busy={loading || undefined} {...rest}>
       {loading && <span className="spinner" aria-hidden="true" />}
       <span>{loading ? 'Завантаження…' : children}</span>
