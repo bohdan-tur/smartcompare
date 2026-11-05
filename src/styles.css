@@ -345,7 +345,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .duel { padding: 8px; gap: 4px; touch-action: auto; position: relative; }
 .duel.is-hidden { visibility: hidden; }
 .duel.is-chosen { padding: 4px; }
-.duel-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.duel-title { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow-wrap: anywhere; }
 .duel-replace { position: absolute; top: 12px; right: 12px; width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--border-default); background: var(--bg-surface); color: var(--text-primary); display: grid; place-items: center; cursor: pointer; z-index: 2; box-shadow: 0 1px 3px rgba(0,0,0,.15); }
 .duel-replace:hover { background: var(--action-secondary-bg); }
 .duel-replace:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
