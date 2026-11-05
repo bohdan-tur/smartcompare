@@ -21,8 +21,8 @@
   --action-primary-pressed: #1A394C;
   --action-secondary-bg: #E6EDF2;
   --focus-ring: #387BA4;
-  --accent-selected: #18665B;
-  --accent-selected-bg: #DDF1EE;
+  --accent-selected: #234D67;
+  --accent-selected-bg: #E6EDF2;
   --status-missing-text: #3D4550;
   --status-missing-bg: #F1F3F6;
   --status-mismatch-text: #8A5300;
@@ -50,8 +50,8 @@
   --action-primary-pressed: #E6EDF2;
   --action-secondary-bg: #1F3A4B;
   --focus-ring: #8DBDD8;
-  --accent-selected: #5CC2B1;
-  --accent-selected-bg: #16352F;
+  --accent-selected: #8DBDD8;
+  --accent-selected-bg: #1F3A4B;
   --status-missing-text: #C9CED6;
   --status-missing-bg: #2A3039;
   --status-mismatch-text: #F2C46B;

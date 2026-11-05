@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { SAMPLES, ROWS, MAX_LISTINGS, BASE_MODEL, LETTERS, validate, fetchListing } from './data.js';
-import { Icon, Button, Badge, Chip, Toggle, Alert, AppBar, Sheet, Toast, ListingCard, Segmented, Stepper, Accordion, Hint, Metric, DuelCard } from './ui.jsx';
+import { SAMPLE_LIST, ALL_SAMPLE_URLS, ROWS, MAX_LISTINGS, BASE_MODEL, LETTERS, validate, fetchListing } from './data.js';
+import { verdict, shortMismatch } from './verdict.js';
+import { Icon, Button, Badge, Chip, Toggle, Alert, AppBar, Sheet, Toast, ListingCard, Segmented, Stepper, Accordion, Hint, DuelCard, DuelBody, Lightbox, SellerCard } from './ui.jsx';
 
 const LOAD_MS = 900;
 const statusLabel = { missing: 'Не вказано', mismatch: 'Розбіжність', risk: 'Месенджер' };
@@ -13,6 +14,13 @@ export default function App({ mode, setMode, resetKey, onReset }) {
   const [inCmp, setInCmp] = useState(new Set()); // ключі оголошень, позначених «У порівнянні»
   const [url, setUrl] = useState('');
   const [error, setError] = useState(null); // {kind, message}
+  // Перевірка під час введення: через 350 мс після останнього символу
+  const [live, setLive] = useState(null); // null | {ok, message, host}
+  useEffect(() => {
+    if (!url.trim()) { setLive(null); return; }
+    const t = setTimeout(() => setLive(validate(url, listings)), 350);
+    return () => clearTimeout(t);
+  }, [url, listings]);
   const [loadError, setLoadError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [focused, setFocused] = useState(false);
@@ -20,7 +28,10 @@ export default function App({ mode, setMode, resetKey, onReset }) {
   const [openGroups, setOpenGroups] = useState({ main: true });
   const toggleGroup = (k) => setOpenGroups((g) => ({ ...g, [k]: !g[k] }));
   const [discarded, setDiscarded] = useState([]); // ключі відкинутих у попарному порівнянні
-  const [slots, setSlots] = useState([null, null]); // хто зараз у парі (ліва і права колонка)
+  const [slots, setSlots] = useState([null, null]);
+  const [waiting, setWaiting] = useState(null);
+  const [photo, setPhoto] = useState(null); // {key, index}: фото на весь екран
+  const appRef = useRef(null);
   const [excluded, setExcluded] = useState(new Set());
   const [sheet, setSheet] = useState(null); // {kind:'issue', ...} | {kind:'choose'} | {kind:'settings'}
   const [chooseIdx, setChooseIdx] = useState(null);
@@ -38,7 +49,7 @@ export default function App({ mode, setMode, resetKey, onReset }) {
     if (!resetKey) return;
     clearTimeout(timer.current);
     setScreen('home'); setListings([]); setInCmp(new Set()); setUrl(''); setError(null); setLoadError(null); setLoading(false);
-    setOnlyDiff(false); setOpenGroups({ main: true }); setDiscarded([]); setSlots([null, null]); setExcluded(new Set()); setSheet(null); setCandidate(null); setCopyFallback(null);
+    setOnlyDiff(false); setOpenGroups({ main: true }); setDiscarded([]); setSlots([null, null]); setWaiting(null); setExcluded(new Set()); setSheet(null); setCandidate(null); setCopyFallback(null);
     showToast(null);
   }, [resetKey]);
 
@@ -81,9 +92,38 @@ export default function App({ mode, setMode, resetKey, onReset }) {
       // Ту саму модель одразу додаємо до порівняння; іншу модель користувач додає сам (див. попередження)
       if (res.data.model === BASE_MODEL) setInCmp((s) => new Set(s).add(res.data.key));
       setUrl('');
-      setScreen('home');
-      showToast({ type: 'success', text: `Оголошення ${letter} додано`, action: 'Скасувати', undo: { kind: 'add', key: res.data.key } });
+      // Пара складається сама: щойно в порівнянні двоє, одразу відкриваємо таблицю
+      const joins = res.data.model === BASE_MODEL;
+      const nActive = cmp.filter((l) => !discarded.includes(l.key)).length + (joins ? 1 : 0);
+      setWaiting(null);
+      if (joins && nActive >= 2) {
+        setScreen('compare');
+        showToast({ type: 'success', text: nActive > 2 ? `${letter} додано в чергу` : `${letter} додано, порівнюємо`, action: 'Скасувати', undo: { kind: 'add', key: res.data.key } });
+      } else if (joins) {
+        setScreen('add');
+        showToast({ type: 'success', text: `${letter} додано. Додайте ще одне, щоб порівняти`, action: 'Скасувати', undo: { kind: 'add', key: res.data.key } });
+      } else {
+        setScreen('home');
+        showToast({ type: 'success', text: `${letter} додано`, action: 'Скасувати', undo: { kind: 'add', key: res.data.key } });
+      }
     }, LOAD_MS);
+  }
+
+  // Демо: додає всі приклади одразу, пропускаючи ті, що вже є
+  function addAllSamples() {
+    let list = [...listings]; const add = [];
+    for (const u of ALL_SAMPLE_URLS) {
+      const v = validate(u, list); if (!v.ok) continue;
+      const res = fetchListing(v); if (!res.ok) continue;
+      const item = { ...res.data, letter: freeLetter(list) }; list = [...list, item]; add.push(item);
+    }
+    if (!add.length) { showToast({ type: 'success', text: 'Усі приклади вже додано', ms: 2500 }); return; }
+    setListings(list);
+    setInCmp((s) => { const n = new Set(s); add.forEach((l) => { if (l.model === BASE_MODEL) n.add(l.key); }); return n; });
+    setUrl(''); setError(null); setLoadError(null); setWaiting(null);
+    const nActive = cmp.filter((l) => !discarded.includes(l.key)).length + add.filter((l) => l.model === BASE_MODEL).length;
+    setScreen(nActive >= 2 ? 'compare' : 'home');
+    showToast({ type: 'success', text: `Додано оголошень: ${add.length}` });
   }
 
   function removeListing(key) {
@@ -99,7 +139,7 @@ export default function App({ mode, setMode, resetKey, onReset }) {
     if (t.undo?.kind === 'add') setListings((ls) => ls.filter((l) => l.key !== t.undo.key));
     if (t.undo?.kind === 'remove') setListings((ls) => { const c = [...ls]; c.splice(t.undo.idx, 0, t.undo.item); return c; });
     if (t.undo?.kind === 'candidate') { setCandidate(t.undo.prev); setScreen('compare'); }
-    if (t.undo?.kind === 'discard') { setDiscarded(t.undo.discarded); setSlots(t.undo.slots); setCandidate(t.undo.candidate); setScreen('compare'); }
+    if (t.undo?.kind === 'discard') { setDiscarded(t.undo.discarded); setSlots(t.undo.slots); setCandidate(t.undo.candidate); setWaiting(null); setScreen('compare'); }
     if (t.retry) { showToast(null); copyQuestions(); return; }
     showToast(t.undo ? { type: 'success', text: 'Дію скасовано', ms: 2000 } : null);
   }
@@ -121,6 +161,7 @@ export default function App({ mode, setMode, resetKey, onReset }) {
   const queue = active.filter((l) => !duelKeys.includes(l.key));
   const gone = discarded.map((k) => listings.find((l) => l.key === k)).filter(Boolean);
   const otherModel = listings.filter((l) => l.model !== BASE_MODEL);
+  const waitingL = waiting && active.length === 1 ? active.find((l) => l.key === waiting) : null;
 
   function discard(key) {
     const prev = { discarded, slots: duelKeys, candidate };
@@ -131,17 +172,19 @@ export default function App({ mode, setMode, resetKey, onReset }) {
     setSlots(nextSlots);
     setDiscarded([...discarded, key]);
     if (!queue.length) {
-      // Черга порожня: той, хто лишився, і є кандидатом
+      // Черга порожня: лишився один. Нічого не обираємо за людину, а пропонуємо додати наступного суперника
       const winner = visible.find((x) => x.key !== key);
       if (winner) {
-        setCandidate(winner.key);
-        setScreen('done');
-        showToast({ type: 'success', text: `Лишився ${winner.letter}: це ваш кандидат`, action: 'Скасувати', undo: { kind: 'discard', ...prev }, ms: 6000 });
+        setWaiting(winner.key);
+        setScreen('add');
+        showToast({ type: 'success', text: `${l.letter} прибрано, черга порожня`, action: 'Скасувати', undo: { kind: 'discard', ...prev }, ms: 5000 });
         return;
       }
     }
-    showToast({ type: 'success', text: queue[0] ? `${l.letter} відкинуто, далі ${queue[0].letter}` : `${l.letter} відкинуто`, action: 'Скасувати', undo: { kind: 'discard', ...prev }, ms: 5000 });
+    showToast({ type: 'success', text: queue[0] ? `${l.letter} замінено на ${queue[0].letter}` : `${l.letter} прибрано`, action: 'Скасувати', undo: { kind: 'discard', ...prev }, ms: 5000 });
   }
+
+  // Повертає відкинуте оголошення в чергу
   function restore(key) {
     setDiscarded(discarded.filter((k) => k !== key));
     const l = listings.find((x) => x.key === key);
@@ -158,10 +201,9 @@ export default function App({ mode, setMode, resetKey, onReset }) {
     setBump((b) => b + 1);
   }
 
-  const rows = ROWS.filter((r) => {
-    if (!onlyDiff || visible.length < 2) return true;
-    return visible[0].fields[r.key]?.value !== visible[1].fields[r.key]?.value;
-  });
+  const verdicts = visible.length === 2 ? Object.fromEntries(ROWS.map((r) => [r.key, verdict(r.key, visible[0], visible[1])])) : {};
+  const rows = ROWS.filter((r) => !onlyDiff || visible.length < 2 || verdicts[r.key]?.tone !== 'same');
+  const score = { a: Object.values(verdicts).filter((v) => v.winner === 0 && !v.unclear).length, b: Object.values(verdicts).filter((v) => v.winner === 1 && !v.unclear).length, q: Object.values(verdicts).filter((v) => v.unclear).length };
 
   // ---------- Питання ----------
   const questionText = () => active.map((l) => {
@@ -206,8 +248,8 @@ export default function App({ mode, setMode, resetKey, onReset }) {
       body = (
         <div className="empty">
           <div className="empty-ic"><Icon name="list" size={28} stroke={1.75} /></div>
-          <h2 className="t-h2">Додайте 2–3 оголошення</h2>
-          <p className="t-body muted">Вставте посилання на вживаний iPhone з OLX чи Prom. Ми зведемо дані в таблицю і підкажемо, що уточнити в продавця.</p>
+          <h2 className="t-h2">Порівняйте оголошення</h2>
+          <p className="t-body muted">Вставляйте посилання з OLX чи Prom, скільки завгодно. Ми покажемо їх по два поруч, зведемо дані в таблицю і підкажемо, що уточнити в продавця.</p>
           <Button onClick={() => go('add')}><Icon name="plus" size={18} /> Додати оголошення</Button>
         </div>
       );
@@ -222,37 +264,51 @@ export default function App({ mode, setMode, resetKey, onReset }) {
             <Alert>У картці {otherModel.map((l) => l.letter).join(', ')} інша модель ({otherModel[0].model}), порівняння з {BASE_MODEL} буде неповним</Alert>
           )}
           {listings.map((l) => (
-            <ListingCard key={l.key} l={l} letter={l.letter} hideTag inCompare={inCmp.has(l.key)}
-              onToggleCompare={() => toggleCompare(l.key)} onRemove={() => removeListing(l.key)} />
+            <ListingCard key={l.key} l={l} letter={l.letter} hideTag inCompare={inCmp.has(l.key) && !discarded.includes(l.key)}
+              isDiscarded={inCmp.has(l.key) && discarded.includes(l.key)}
+              onToggleCompare={() => (discarded.includes(l.key) ? restore(l.key) : toggleCompare(l.key))} onRemove={() => removeListing(l.key)} />
           ))}
           {listings.length < 2 && <p className="t-body-s muted list-hint">Додайте ще одне оголошення, щоб порівняти</p>}
-          {listings.length >= 2 && cmp.length < 2 && <p className="t-body-s muted list-hint">Позначте щонайменше два оголошення «Додати до порівняння»</p>}
+          {listings.length >= 2 && active.length < 2 && <p className="t-body-s muted list-hint">Позначте щонайменше два оголошення «Додати до порівняння»</p>}
         </div>
       );
       footer = (
         <>
+          <div className="foot-row">
           <Button type="secondary" onClick={() => go('add')}><Icon name="plus" size={18} /> Додати ще</Button>
-          <Button disabled={cmp.length < 2} onClick={() => go('compare')}>Порівняти ({cmp.length})</Button>
+          <Button disabled={active.length < 2} onClick={() => go('compare')}>Порівняти ({active.length})</Button>
+          </div>
         </>
       );
     }
   }
 
   if (screen === 'add') {
-    const state = loading ? 'disabled' : error ? 'error' : focused ? 'focus' : url ? 'filled' : 'default';
-    bar = <AppBar title="Нове оголошення" onBack={() => go('home')} />;
+    const shownErr = error || (live && !live.ok ? live : null);
+    const state = loading ? 'disabled' : shownErr ? 'error' : live?.ok ? 'valid' : focused ? 'focus' : url ? 'filled' : 'default';
+    bar = <AppBar title="Нове оголошення" onBack={() => go('home')} right={settingsBtn} />;
     body = (
       <form className="stack" onSubmit={submit} noValidate>
+        {waitingL && (
+          <div className="wait-card">
+            <p className="t-body-s"><b>Лишився {waitingL.letter}</b> ({waitingL.city}, {waitingL.fields.price.value}). Додайте наступне оголошення, і порівняння продовжиться з ним.</p>
+            <Button type="secondary" size="m" onClick={() => { setChooseIdx(null); setCandidate(waitingL.key); setWaiting(null); go('done'); showToast({ type: 'success', text: `Кандидата ${waitingL.letter} обрано` }); }}>
+              <Icon name="check" size={16} /> Обрати {waitingL.letter} кандидатом
+            </Button>
+          </div>
+        )}
         <div className={`field field-${state}`}>
           <label htmlFor="url" className="t-body-s field-label">Посилання на оголошення</label>
-          <input id="url" ref={inputRef} className="t-body field-input" type="url" inputMode="url" autoComplete="off"
+          <input id="url" ref={inputRef} className="t-body field-input" type="text" inputMode="url" autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck={false} enterKeyHint="go"
             placeholder="Вставте посилання з OLX або Prom" value={url} disabled={loading}
             onChange={(e) => { setUrl(e.target.value); if (error) setError(null); if (loadError) setLoadError(null); }}
             onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-            aria-invalid={!!error} aria-describedby="url-help" maxLength={2000} />
-          {error
-            ? <p id="url-help" className="t-caption field-help is-error" role="alert"><Icon name="error" size={12} /> {error.message}</p>
-            : <p id="url-help" className="t-caption field-help">Підтримуємо OLX і Prom</p>}
+            aria-invalid={!!shownErr} aria-describedby="url-help" maxLength={2000} />
+          {shownErr
+            ? <p id="url-help" className="t-caption field-help is-error" role="alert"><Icon name="error" size={12} /> {shownErr.message}</p>
+            : live?.ok
+              ? <p id="url-help" className="t-caption field-help is-ok" aria-live="polite"><Icon name="check" size={12} /> Посилання з {live.host.includes('prom') ? 'Prom' : 'OLX'}, можна додавати</p>
+              : <p id="url-help" className="t-caption field-help">Підтримуємо OLX і Prom</p>}
         </div>
         {loadError && (
           <Alert type="error" action={<button type="button" className="link-btn t-body-s" onClick={submit}>Спробувати ще раз</button>}>
@@ -265,9 +321,10 @@ export default function App({ mode, setMode, resetKey, onReset }) {
           </div>
         )}
         <div className="samples">
-          <p className="t-caption muted">Немає посилання під рукою? Вставте приклад</p>
+          <p className="t-caption muted">Немає посилання під рукою? Вставте приклад або додайте всі одразу</p>
+          <Button type="secondary" size="m" disabled={loading} onClick={addAllSamples}><Icon name="plus" size={16} /> Додати всі приклади ({ALL_SAMPLE_URLS.length})</Button>
           <div className="chips">
-            {[['А: чесне', SAMPLES.a], ['Б: з прогалинами', SAMPLES.b], ['В: інша модель', SAMPLES.c], ['Ще одне з OLX', () => `https://www.olx.ua/d/uk/obyavlenie/iphone-13-128-ID${Math.random().toString(36).slice(2, 7)}.html`], ['Знято з продажу', SAMPLES.removed], ['Інший сайт', SAMPLES.foreign]].map(([t, u]) => (
+            {[...SAMPLE_LIST.map((x) => [x.label, x.url]), ['Ще одне з OLX', () => `https://www.olx.ua/d/uk/obyavlenie/iphone-13-128-ID${Math.random().toString(36).slice(2, 7)}.html`]].map(([t, u]) => (
               <Chip key={t} type="button" disabled={loading} onClick={() => { setUrl(typeof u === 'function' ? u() : u); setError(null); setLoadError(null); }}>{t}</Chip>
             ))}
           </div>
@@ -279,7 +336,7 @@ export default function App({ mode, setMode, resetKey, onReset }) {
   }
 
   if (screen === 'compare') {
-    bar = <AppBar title={`Порівняння (${active.length})`} onBack={() => go('home')} />;
+    bar = <AppBar title={`Порівняння (${active.length})`} onBack={() => go('home')} right={settingsBtn} />;
     if (active.length < 2) {
       body = (
         <div className="empty">
@@ -290,74 +347,99 @@ export default function App({ mode, setMode, resetKey, onReset }) {
       );
     } else {
       const [pa, pb] = visible;
-      const cheaper = pa.price === pb.price ? null : pa.price < pb.price ? [pa, pb] : [pb, pa];
-      const contactText = (l) => l.fields.contact.status === 'risk' ? 'просить перейти в месенджер' : 'листування через чат сайту';
+      // Підказка: одна найважливіша наступна дія саме для цієї пари, або нічого
+      const money = (n) => n.toLocaleString('uk-UA').replace(/\u00a0/g, ' ') + ' ₴';
+      const hint = (() => {
+        const find = (st) => { for (const r of ROWS) for (const l of visible) { const f = l.fields[r.key]; if (f?.status === st) return { l, r, f }; } return null; };
+        const m = find('mismatch'); if (m) return { text: <><b>{m.l.letter} · {m.r.label}:</b> {m.f.detail || m.f.value}. Уточніть до зустрічі.</> };
+        const r = find('risk'); if (r) return { text: <><b>{r.l.letter}</b> пропонує перейти в месенджер. Пишіть лише в чаті сайту й не передплачуйте.</> };
+        const [lo, hi] = pa.price <= pb.price ? [pa, pb] : [pb, pa];
+        const pct = Math.round((hi.price - lo.price) / hi.price * 100);
+        if (pct >= 15) return { text: <><b>{lo.letter}</b> дешевше на {money(hi.price - lo.price)} (−{pct} %). Така знижка буває в крадених чи заблокованих телефонах: попросіть фото IMEI і чек.</> };
+        const ms = find('missing'); if (ms) return { text: <><b>{ms.l.letter}</b> не вказав поле «{ms.r.label}». Спитайте до зустрічі.</> };
+        return null;
+      })();
       body = (
         <div className="stack">
           <Stepper current={3} />
-          <div className="duels" role="group" aria-label="Пара в таблиці. Свайпніть картку вгору або натисніть «Відкинути»">
+          <div className="duels" role="group" aria-label="Пара в таблиці. Кнопка ↻ або змах картки вгору замінює оголошення наступним із черги">
             {visible.map((l) => (
-              <DuelCard key={l.key} l={l} chosen={candidate === l.key} onDiscard={() => discard(l.key)} />
+              <DuelCard key={l.key} l={l} chosen={candidate === l.key} nextLetter={queue[0]?.letter}
+                onReplace={() => discard(l.key)} onOpenPhoto={(i) => setPhoto({ key: l.key, index: i })} />
             ))}
           </div>
           <p className="t-caption muted queue-line" aria-live="polite">
             {queue.length
-              ? <>Далі в черзі: <b>{queue.map((l) => l.letter).join(', ')}</b>. Свайпніть слабшу картку вгору, на її місце прийде {queue[0].letter}.</>
-              : 'Черга порожня. Відкиньте слабшого, і той, хто лишиться, стане кандидатом.'}
+              ? <><Icon name="refresh" size={12} /> або змахніть картку вгору, щоб замінити. Далі в черзі: <b>{queue.map((l) => l.letter).join(', ')}</b>.</>
+              : <><Icon name="refresh" size={12} /> замінить картку, коли в черзі хтось буде. Черга порожня.</>}
+            {' '}<button className="link-btn" onClick={() => go('add')}>+ Додати в чергу</button>
           </p>
+          {hint && <Hint>{hint.text}</Hint>}
           <Segmented value={onlyDiff ? 'diff' : 'all'} onChange={(v) => setOnlyDiff(v === 'diff')} label="Які параметри показати" options={[['all', 'Всі параметри'], ['diff', 'Тільки відмінності']]} />
           {visible.some((l) => l.model !== BASE_MODEL) && (
             <Alert>У картці {visible.filter((l) => l.model !== BASE_MODEL).map((l) => l.letter).join(', ')} інша модель, порівняння неповне</Alert>
           )}
-          <div className="metrics">
-            <span />
-            {visible.map((l) => <Metric key={l.key} value={l.fields.battery.value} label="акумулятор" missing={l.fields.battery.status === 'missing'} />)}
-          </div>
           <Accordion title="Основні параметри" open={!!openGroups.main} onToggle={() => toggleGroup('main')}>
-          <div className="table" role="table" aria-label="Порівняння оголошень">
-            <div className="tr th" role="row">
-              <span className="td td-label" role="columnheader" />
-              {visible.map((l) => (
-                <span key={l.key} className="td th-cell" role="columnheader" aria-label={`Оголошення ${l.letter}, ${l.city}`}>
-                  <span className="letter">{l.letter}</span>
-                  <span className="t-body-s">{l.city}</span>
-                </span>
-              ))}
-            </div>
-            {rows.map((r) => (
-              <div className="tr" role="row" key={r.key}>
-                <span className="td td-label t-caption" role="rowheader"><span className="label-ic"><Icon name={r.icon} size={12} />{r.label}</span></span>
-                {visible.map((l) => {
-                  const f = l.fields[r.key];
-                  const qid = l.key + ':' + r.key;
-                  return (
-                    <span key={l.key} role="cell" className={`td t-body-s ${f.status === 'mismatch' ? 'cell-mismatch' : ''} ${f.status === 'missing' ? 'cell-missing' : ''}`}>
-                      {f.status === 'risk'
-                        ? <Badge type="risk" onClick={() => setSheet({ kind: 'issue', qid, letter: l.letter, row: r.label, ...f })}>{f.value}</Badge>
-                        : f.status
-                          ? <button className="cell-btn" onClick={() => setSheet({ kind: 'issue', qid, letter: l.letter, row: r.label, ...f })}>
-                              <Icon name={f.status} size={12} /> {f.value}</button>
-                          : f.value}
-                    </span>
-                  );
-                })}
-              </div>
-            ))}
+          <div className="score" role="group" aria-label="Підсумок по параметрах">
+            <div className="score-tile"><b className="t-h2">{score.a}</b><span className="t-caption">краще в {visible[0].letter}</span></div>
+            <div className={`score-tile ${score.q ? 'is-warn' : ''}`}><b className="t-h2">{score.q}</b><span className="t-caption">уточнити</span></div>
+            <div className="score-tile"><b className="t-h2">{score.b}</b><span className="t-caption">краще в {visible[1].letter}</span></div>
+          </div>
+          <div className="vrows" role="table" aria-label="Порівняння оголошень">
+            {rows.map((r) => {
+              const v = verdicts[r.key];
+              return (
+                <div className="vrow" role="row" key={r.key}>
+                  <div className="vrow-head">
+                    <span className="t-caption muted label-ic" role="rowheader"><Icon name={r.icon} size={12} />{r.label}</span>
+                    <span className={`t-caption vrow-verdict tone-${v.tone}`}>{v.text}</span>
+                  </div>
+                  <div className="vrow-vals">
+                    {visible.map((l, i) => {
+                      const f = l.fields[r.key];
+                      const qid = l.key + ':' + r.key;
+                      const kind = f.status === 'mismatch' ? 'mismatch' : f.status === 'missing' ? 'missing' : f.status === 'risk' ? 'risk' : v.winner === i ? 'better' : 'neutral';
+                      const open = () => setSheet({ kind: 'issue', qid, letter: l.letter, row: r.label, ...f });
+                      const Tag = f.status ? 'button' : 'span';
+                      return (
+                        <Tag key={l.key} role="cell" className={`vbox vbox-${kind} ${i === 1 ? 'is-right' : ''}`} {...(f.status ? { onClick: open, type: 'button', 'aria-label': `${l.letter}: ${f.value}. Пояснення` } : {})}>
+                          {kind === 'mismatch' && <Icon name="mismatch" size={14} />}
+                          {kind === 'missing' && <Icon name="missing" size={14} />}
+                          {kind === 'risk' && <Icon name="risk" size={14} />}
+                          <span>{kind === 'mismatch' ? shortMismatch(f.value) : kind === 'missing' ? 'не вказано' : f.value}</span>
+                        </Tag>
+                      );
+                    })}
+                  </div>
+                  {(v.note || visible.some((l) => l.fields[r.key]?.detail)) && (
+                    <p className="t-caption muted vrow-note">{v.note || visible.map((l) => l.fields[r.key]?.detail && `${l.letter}: ${l.fields[r.key].detail}`).filter(Boolean).join(' · ')}</p>
+                  )}
+                </div>
+              );
+            })}
             {onlyDiff && rows.length === 0 && <p className="t-body-s muted table-empty">Усі параметри цих оголошень збігаються</p>}
           </div>
           </Accordion>
-          <Accordion title="Продавець" open={!!openGroups.seller} onToggle={() => toggleGroup('seller')}>
-            <ul className="t-body-s plain-list">
-              {visible.map((l) => <li key={l.key}><b>{l.letter}</b>: {contactText(l)}, {l.city}</li>)}
-            </ul>
+          <Accordion title="Продавці" open={openGroups.seller !== false} onToggle={() => setOpenGroups((g) => ({ ...g, seller: g.seller === false }))}>
+            <div className="sellers">{visible.map((l) => <SellerCard key={l.key} l={l} />)}</div>
+            <div className="table seller-table" role="table" aria-label="Продавці">
+              {[['На сайті', (s) => s.since], ['Продано', (s) => `${s.sold} товарів`], ['Телефон підтверджено', (s) => (s.phone ? 'так' : 'не вказано')]].map(([label, get]) => (
+                <div className="tr" role="row" key={label}>
+                  <span className="td td-label t-caption" role="rowheader">{label}</span>
+                  {visible.map((l) => <span key={l.key} role="cell" className={`td t-body-s ${label === 'Телефон підтверджено' && !l.seller?.phone ? 'cell-missing' : ''}`}>{l.seller ? get(l.seller) : '—'}</span>)}
+                </div>
+              ))}
+            </div>
+            {visible.filter((l) => l.seller && !l.seller.verified && l.seller.reviews < 10).map((l) => (
+              <Alert key={l.key}><b>Продавець {l.letter} новий і має мало відгуків.</b> Не передплачуйте. Оберіть оплату при отриманні або зустріч, щоб перевірити телефон на місці.</Alert>
+            ))}
           </Accordion>
-          {cheaper && <Hint>Оголошення {cheaper[0].letter} на {(cheaper[1].price - cheaper[0].price).toLocaleString('uk-UA').replace(/\u00a0/g, ' ')} ₴ дешевше за {cheaper[1].letter}. Попросіть у продавця фото IMEI і чек.</Hint>}
           {gone.length > 0 && (
             <Accordion title={`Відкинуті (${gone.length})`} open={!!openGroups.gone} onToggle={() => toggleGroup('gone')}>
               <ul className="gone-list">
                 {gone.map((l) => (
                   <li key={l.key} className="gone-item">
-                    <span className="letter sm">{l.letter}</span>
+                    <span className="letter sm">{String(l.letter).replace("№", "")}</span>
                     <span className="t-body-s gone-text">{l.title}, {l.fields.price.value}</span>
                     <button className="link-btn t-body-s" onClick={() => restore(l.key)} aria-label={`Повернути оголошення ${l.letter} в чергу`}>Повернути</button>
                   </li>
@@ -387,7 +469,7 @@ export default function App({ mode, setMode, resetKey, onReset }) {
   }
 
   if (screen === 'questions') {
-    bar = <AppBar title="Що уточнити" onBack={() => go('compare')} />;
+    bar = <AppBar title="Що уточнити" onBack={() => go('compare')} right={settingsBtn} />;
     if (!issues.length) {
       body = (
         <div className="empty">
@@ -435,7 +517,7 @@ export default function App({ mode, setMode, resetKey, onReset }) {
 
   if (screen === 'done') {
     const c = listings.find((l) => l.key === candidate);
-    bar = <AppBar title="Кандидат" onBack={() => go('compare')} />;
+    bar = <AppBar title="Кандидат" onBack={() => go('compare')} right={settingsBtn} />;
     body = !c ? (
       <div className="empty"><h2 className="t-h2">Кандидата не обрано</h2>
         <Button onClick={() => go('compare')}>До порівняння</Button></div>
@@ -465,13 +547,15 @@ export default function App({ mode, setMode, resetKey, onReset }) {
   }
 
   return (
-    <div className="app" data-mode={mode} data-ts={ts}>
+    <div className="app" data-mode={mode} data-ts={ts} ref={appRef}>
       {bar}
       <main className="app-body" ref={bodyRef} key={screen}>{body}</main>
       <div className="foot-wrap">
         <Toast toast={toast} onAction={onToastAction} />
         {footer && <footer className="app-foot">{footer}</footer>}
       </div>
+
+      <Lightbox l={photo ? listings.find((x) => x.key === photo.key) : null} index={photo?.index} onClose={() => setPhoto(null)} />
 
       <Sheet open={sheet?.kind === 'issue'} onClose={() => setSheet(null)} title={sheet ? `${sheet.row} · оголошення ${sheet.letter}` : ''}>
         {sheet?.kind === 'issue' && (
