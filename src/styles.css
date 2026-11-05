@@ -32,10 +32,9 @@ button, input, textarea { font: inherit; color: inherit; }
 :focus-visible { outline: 2px solid var(--page-accent); outline-offset: 2px; }
 
 .stage { display: flex; justify-content: center; }
-.phone { width: 360px; height: 760px; max-height: calc(100vh - 64px); min-height: 600px; border-radius: 36px; overflow: hidden; overflow: clip; position: relative;
+.phone { width: 360px; height: 740px; max-height: calc(100vh - 64px); min-height: 600px; border-radius: 36px; overflow: hidden; overflow: clip; position: relative;
   background: var(--bg-page); color: var(--text-primary); display: flex; flex-direction: column;
   box-shadow: 0 0 0 10px #1C2128, 0 0 0 11px #3A424E, 0 30px 60px -20px rgba(0,0,0,.35); transition: background .3s var(--ease), color .3s var(--ease); }
-.statusbar { display: flex; justify-content: space-between; padding: 12px 24px 4px; font-size: 12px; font-weight: 600; color: var(--text-primary); flex: none; }
 
 /* Справжній телефон: прототип на весь екран, без рамки, підказок і фальшивого статус-бару */
 @media (max-width: 760px) {
@@ -45,7 +44,6 @@ button, input, textarea { font: inherit; color: inherit; }
   .panel { display: none; }
   .stage { height: 100%; }
   .phone { width: 100%; height: 100%; max-height: none; min-height: 0; border-radius: 0; box-shadow: none; }
-  .statusbar { display: none; }
   .app-foot { padding-bottom: max(var(--space-4), env(safe-area-inset-bottom, 0px)); }
   .appbar { padding-left: max(4px, env(safe-area-inset-left, 0px)); padding-right: max(4px, env(safe-area-inset-right, 0px)); }
 }

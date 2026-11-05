@@ -20,7 +20,6 @@ function Shell() {
 
       <div className="stage">
         <div className="phone" data-mode={mode}>
-          <div className="statusbar" aria-hidden="true"><span>9:41</span><span>5G 100%</span></div>
           <App mode={mode} setMode={setMode} resetKey={resetKey} onReset={() => setResetKey((k) => k + 1)} />
         </div>
       </div>
