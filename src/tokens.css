@@ -88,6 +88,6 @@
 .t-body-s { font-weight:400; font-size: calc(14px * var(--ts, 1)); line-height: calc(20px * var(--ts, 1)); }
 .t-body-s-strong { font-weight:600; font-size: calc(14px * var(--ts, 1)); line-height: calc(20px * var(--ts, 1)); }
 .t-caption { font-weight:500; font-size: calc(12px * var(--ts, 1)); line-height: calc(16px * var(--ts, 1)); }
-.t-numeric { font-weight:500; font-size: calc(16px * var(--ts, 1)); line-height: calc(24px * var(--ts, 1)); font-variant-numeric: tabular-nums; }
-.t-numeric-l { font-family: var(--font-display); font-weight:600; font-size: calc(24px * var(--ts, 1)); line-height: calc(32px * var(--ts, 1)); font-variant-numeric: tabular-nums; }
+.t-numeric { font-weight:500; font-size: calc(16px * var(--ts, 1)); line-height: calc(24px * var(--ts, 1)); }
+.t-numeric-l { font-family: var(--font-display); font-weight:600; font-size: calc(24px * var(--ts, 1)); line-height: calc(32px * var(--ts, 1)); }
 .t-badge { font-weight:600; font-size: calc(12px * var(--ts, 1)); line-height: calc(16px * var(--ts, 1)); }

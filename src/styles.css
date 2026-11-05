@@ -172,7 +172,7 @@ button.badge:hover { box-shadow: 0 0 0 1px currentColor; }
 .table { border: 1px solid var(--border-default); border-radius: var(--radius-m); overflow: hidden; background: var(--bg-surface); }
 .tr { display: grid; grid-template-columns: 96px 1fr 1fr; border-bottom: 1px solid var(--border-default); animation: enter .2s var(--ease); }
 .tr:last-child { border-bottom: 0; }
-.td { min-height: 48px; padding: var(--space-2); display: flex; flex-direction: column; justify-content: center; min-width: 0; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.td { min-height: 48px; padding: var(--space-2); display: flex; flex-direction: column; justify-content: center; min-width: 0; overflow-wrap: anywhere; }
 .th .td { min-height: 56px; }
 .td-label { color: var(--text-secondary); overflow-wrap: normal; hyphens: manual; }
 .th-cell { flex-direction: row !important; align-items: center; justify-content: flex-start !important; gap: var(--space-2); }
@@ -420,7 +420,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 /* Таблиця-вердикт: підсумок, рядки з висновком і плитки значень */
 .score { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
 .score-tile { display: flex; flex-direction: column; align-items: center; gap: 0; padding: 8px 4px; border-radius: var(--radius-m); background: var(--bg-surface); border: 1px solid var(--border-default); color: var(--text-primary); text-align: center; }
-.score-tile b { font-variant-numeric: tabular-nums; }
+.score-tile b { }
 .score-tile .t-caption { color: var(--text-secondary); }
 .score-tile.is-warn { background: var(--status-mismatch-bg); border-color: var(--status-mismatch-icon); color: var(--status-mismatch-text); }
 .score-tile.is-warn .t-caption { color: var(--status-mismatch-text); }
@@ -432,7 +432,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .tone-warn { color: var(--status-mismatch-text); }
 .tone-same { color: var(--text-secondary); font-weight: 500; }
 .vrow-vals { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
-.vbox { all: unset; box-sizing: border-box; min-height: 40px; display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: var(--radius-m); background: var(--bg-subtle); color: var(--text-primary); border: 1px solid transparent; font-size: calc(14px * var(--ts, 1)); line-height: calc(20px * var(--ts, 1)); font-variant-numeric: tabular-nums; min-width: 0; overflow-wrap: anywhere; }
+.vbox { all: unset; box-sizing: border-box; min-height: 40px; display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: var(--radius-m); background: var(--bg-subtle); color: var(--text-primary); border: 1px solid transparent; font-size: calc(14px * var(--ts, 1)); line-height: calc(20px * var(--ts, 1)); min-width: 0; overflow-wrap: anywhere; }
 .vbox.is-right { justify-content: flex-end; text-align: right; }
 .vbox-better { background: var(--accent-selected-bg); border-color: var(--accent-selected); font-weight: 600; }
 .vbox-mismatch { background: var(--status-mismatch-bg); border: 1px dashed var(--status-mismatch-icon); color: var(--status-mismatch-text); font-weight: 600; }
@@ -472,4 +472,4 @@ button.vbox:focus-visible { outline: 2px solid var(--focus-ring); outline-offset
 /* Пігулка гортання: компактніша і прозоріша, після першого гортання — лише лічильник */
 .gal-pill .gal-arrow { height: 24px; }
 
-.gal-pill.is-seen .gal-pill-text { font-variant-numeric: tabular-nums; }
+.gal-pill.is-seen .gal-pill-text { }
