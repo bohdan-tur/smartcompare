@@ -196,15 +196,19 @@ export function Segmented({ value, onChange, options, label }) {
   );
 }
 
-export function Stepper({ current }) {
+export function Stepper({ current, onStep }) {
   const steps = ['Ваші дані', 'Список', 'Порівняння', 'Рішення'];
   return (
     <ol className="stepper" aria-label="Кроки">
-      {steps.map((s, i) => (
-        <li key={s} className={i + 1 < current ? 'done' : i + 1 === current ? 'cur' : 'next'} aria-current={i + 1 === current ? 'step' : undefined}>
-          {i + 1} {s}
-        </li>
-      ))}
+      {steps.map((s, i) => {
+        const n = i + 1, cls = n < current ? 'done' : n === current ? 'cur' : 'next';
+        const click = onStep && n !== current ? () => onStep(n) : null;
+        return (
+          <li key={s} className={cls} aria-current={n === current ? 'step' : undefined}>
+            {click ? <button type="button" className="stepper-btn" onClick={click}>{n} {s}</button> : <>{n} {s}</>}
+          </li>
+        );
+      })}
     </ol>
   );
 }

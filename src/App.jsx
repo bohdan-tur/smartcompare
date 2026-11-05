@@ -361,7 +361,7 @@ export default function App({ mode, setMode, resetKey, onReset }) {
       })();
       body = (
         <div className="stack">
-          <Stepper current={3} />
+          <Stepper current={3} onStep={(n) => { if (n === 1) go('add'); else if (n === 2) go('home'); else { const ci = active.findIndex((l) => l.key === candidate); setChooseIdx(ci >= 0 ? ci : null); setSheet({ kind: 'choose' }); } }} />
           <div className="duels" role="group" aria-label="Пара в таблиці. Кнопка ↻ або змах картки вгору замінює оголошення наступним із черги">
             {visible.map((l) => (
               <DuelCard key={l.key} l={l} chosen={candidate === l.key} nextLetter={queue[0]?.letter}
